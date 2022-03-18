@@ -1,0 +1,15 @@
+target/
+project/
+
+.settings
+.project
+.classpath
+
+.bsp
+.idea
+*.iml
+
+.metals
+.bloop
+
+
