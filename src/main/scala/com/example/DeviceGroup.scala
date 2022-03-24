@@ -9,6 +9,9 @@ import akka.actor.typed.scaladsl.ActorContext
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.scaladsl.LoggerOps
 
+// 3.sencods
+import scala.concurrent.duration._
+
 object DeviceGroup {
 
   trait Command
@@ -21,7 +24,7 @@ object DeviceGroup {
 class DeviceGroup(context: ActorContext[DeviceGroup.Command], groupId: String) 
     extends AbstractBehavior[DeviceGroup.Command](context) {
   import DeviceGroup._
-  import DeviceManager.{RequestTrackDevice, DeviceRegistered, RequestDeviceList, ReplyDeviceList}
+  import DeviceManager.{RequestTrackDevice, DeviceRegistered, RequestDeviceList, ReplyDeviceList, RequestAllTemperatures}
 
   private var deviceIdToActor = Map.empty[String, ActorRef[Device.Command]]
   context.log.info("DeviceGroup {} started", groupId)
@@ -51,6 +54,17 @@ class DeviceGroup(context: ActorContext[DeviceGroup.Command], groupId: String)
             replyTo ! ReplyDeviceList(requestId, deviceIdToActor.keySet)
             this
           case _ =>
+            Behaviors.unhandled
+        }
+
+      case RequestAllTemperatures(requestId, gId, replyTo) => 
+        gId match {
+          case `groupId` => 
+            context.spawnAnonymous(
+              DeviceGroupQuery(deviceIdToActor, requestId, replyTo, 3.seconds)
+            )
+            this
+          case _ => 
             Behaviors.unhandled
         }
 
